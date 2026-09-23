@@ -43,43 +43,22 @@ jobs:
           fi
           ls -lh stock_data.db
 
-      - name: Set up SSH agent with key (passphrase対応)
+      - name: Set up SSH key for SFTP
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.XSERVER_SSH_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -p "${{ secrets.XSERVER_PORT }}" "${{ secrets.XSERVER_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
 
-          eval "$(ssh-agent -s)"
-          echo "SSH_AUTH_SOCK=$SSH_AUTH_SOCK" >> "$GITHUB_ENV"
-          echo "SSH_AGENT_PID=$SSH_AGENT_PID" >> "$GITHUB_ENV"
-
-          # パスフレーズを対話無しでssh-addに渡すためのaskpassスクリプト
-          cat > /tmp/askpass.sh <<'EOS'
-          #!/bin/sh
-          echo "$SSH_KEY_PASSPHRASE"
-          EOS
-          chmod +x /tmp/askpass.sh
-
-          export SSH_ASKPASS=/tmp/askpass.sh
-          export SSH_ASKPASS_REQUIRE=force
-          # 制御端末を切り離してaskpassを強制的に使わせる（setsidが無いとaskpassが無視されるため）
-          setsid ssh-add ~/.ssh/id_ed25519 < /dev/null
-        env:
-          # パスフレーズ無しの鍵を使う場合は、このSecretを未登録のままでOK（空文字として扱われる）
-          SSH_KEY_PASSPHRASE: ${{ secrets.XSERVER_SSH_PASSPHRASE }}
-
       - name: Upload stock_data.db via SFTP
         run: |
-          sftp -P "${{ secrets.XSERVER_PORT }}" \
+          sftp -P "${{ secrets.XSERVER_PORT }}" -i ~/.ssh/id_ed25519 \
             -o StrictHostKeyChecking=yes \
             "${{ secrets.XSERVER_USER }}@${{ secrets.XSERVER_HOST }}" <<EOF
           put stock_data.db ${{ secrets.XSERVER_REMOTE_PATH }}/stock_data.db
           bye
           EOF
 
-      - name: Clean up SSH key and agent
+      - name: Clean up SSH key
         if: always()
-        run: |
-          rm -f ~/.ssh/id_ed25519
-          [ -n "$SSH_AGENT_PID" ] && kill "$SSH_AGENT_PID" || true
+        run: rm -f ~/.ssh/id_ed25519
