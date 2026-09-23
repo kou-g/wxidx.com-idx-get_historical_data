@@ -43,20 +43,8 @@ jobs:
           fi
           ls -lh stock_data.db
 
-      - name: Set up SSH key for SFTP
+      - name: Upload stock_data.db via FTPS
         run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.XSERVER_SSH_KEY }}" > ~/.ssh/id_ed25519
-          chmod 600 ~/.ssh/id_ed25519
-          ssh-keyscan -p "${{ secrets.XSERVER_PORT }}" "${{ secrets.XSERVER_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
-
-      - name: Upload stock_data.db via SCP
-        run: |
-          scp -P "${{ secrets.XSERVER_PORT }}" -i ~/.ssh/id_ed25519 \
-            -o StrictHostKeyChecking=yes \
-            stock_data.db \
-            "${{ secrets.XSERVER_USER }}@${{ secrets.XSERVER_HOST }}:${{ secrets.XSERVER_REMOTE_PATH }}/stock_data.db"
-
-      - name: Clean up SSH key
-        if: always()
-        run: rm -f ~/.ssh/id_ed25519
+          curl --ssl-reqd --user "${{ secrets.XSERVER_FTP_USER }}:${{ secrets.XSERVER_FTP_PASSWORD }}" \
+            -T stock_data.db \
+            "ftp://${{ secrets.XSERVER_FTP_HOST }}${{ secrets.XSERVER_REMOTE_PATH }}/stock_data.db"
