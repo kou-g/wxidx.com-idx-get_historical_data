@@ -1,15 +1,13 @@
 name: Fetch stock data and deploy to Xserver
 
 on:
-  schedule:
-    # 毎時0分に実行（UTC基準。日本時間からは-9時間なので、JSTの毎時0分に実行したい場合は
-    # サーバー処理が数分ずれても問題ない前提でこのままでOK。厳密にJST毎時0分にしたい場合は
-    # 単純に "0 * * * *" のままで問題ありません。GitHub Actionsのcronはあくまで目安の時刻で、
-    # 高負荷時は数分〜十数分遅延することがあります）
-    - cron: '0 * * * *'
+  # 開発中につき、1時間ごとの自動実行（cron）は一時停止中。
+  # 本稼働を開始するタイミングで、下の2行のコメント（#）を外せば再開できます。
+  # schedule:
+  #   - cron: '0 * * * *'
   workflow_dispatch: {}
     # 手動実行用。Actionsタブの「Run workflow」ボタンから、スケジュールを待たずに
-    # 動作確認ができます。導入時はまずこちらで試すことを推奨します。
+    # 動作確認ができます。開発中はこちらだけを使って動作確認してください。
 
 concurrency:
   group: fetch-stock-data
@@ -19,7 +17,7 @@ concurrency:
 jobs:
   fetch-and-deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 3
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
