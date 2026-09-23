@@ -50,14 +50,12 @@ jobs:
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -p "${{ secrets.XSERVER_PORT }}" "${{ secrets.XSERVER_HOST }}" >> ~/.ssh/known_hosts 2>/dev/null
 
-      - name: Upload stock_data.db via SFTP
+      - name: Upload stock_data.db via SCP
         run: |
-          sftp -P "${{ secrets.XSERVER_PORT }}" -i ~/.ssh/id_ed25519 \
+          scp -P "${{ secrets.XSERVER_PORT }}" -i ~/.ssh/id_ed25519 \
             -o StrictHostKeyChecking=yes \
-            "${{ secrets.XSERVER_USER }}@${{ secrets.XSERVER_HOST }}" <<EOF
-          put stock_data.db ${{ secrets.XSERVER_REMOTE_PATH }}/stock_data.db
-          bye
-          EOF
+            stock_data.db \
+            "${{ secrets.XSERVER_USER }}@${{ secrets.XSERVER_HOST }}:${{ secrets.XSERVER_REMOTE_PATH }}/stock_data.db"
 
       - name: Clean up SSH key
         if: always()
