@@ -1,8 +1,7 @@
 name: Fetch stock data and deploy to Xserver
 
 on:
-  # 開発中につき、自動実行（cron）は一時停止中。
-  # 本稼働を開始するタイミングで、下の2行のコメント（#）を外せば再開できます。
+  # 起動時刻設定（UTC）
   schedule:
     - cron: '5 22,10 * * *'
   workflow_dispatch: {}
