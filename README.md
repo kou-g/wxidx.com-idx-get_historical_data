@@ -1,1 +1,2 @@
-https://wxidx.com バックグラウンド処理
+https://wxidx.com/pages/idx/ バックグラウンド処理
+主要株価指数DBを作成しwebサーバにアップロード
