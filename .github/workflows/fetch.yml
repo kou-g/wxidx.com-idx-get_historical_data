@@ -45,4 +45,4 @@ jobs:
         run: |
           curl --ssl-reqd --user "${{ secrets.XSERVER_FTP_USER }}:${{ secrets.XSERVER_FTP_PASSWORD }}" \
             -T stock_data.db \
-            "ftp://${{ secrets.XSERVER_FTP_HOST }}${{ secrets.XSERVER_REMOTE_PATH }}/stock_data.db"
+            "ftp://${{ secrets.XSERVER_FTP_HOST }}${{ secrets.XSERVER_REMOTE_PATH }}/pages/idx/stock_data.db"
