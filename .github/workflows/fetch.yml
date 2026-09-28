@@ -3,7 +3,8 @@ name: Fetch stock data and deploy to Xserver
 on:
   # 起動時刻設定（UTC）
   schedule:
-    - cron: '5 22,10 * * *'
+    - cron: '41 21 * * *'
+    - cron: '41 09 * * *'
   workflow_dispatch: {}
     # 手動実行用。Actionsタブの「Run workflow」ボタンから、スケジュールを待たずに
     # 動作確認ができます。開発中はこちらだけを使って動作確認してください。
