@@ -21,6 +21,9 @@ TARGET_INDEXES = [
 #出力先データベースパス
 DB_PATH = "stock_data.db"
 
+# 取得対象期間（年）
+YEARS_BACK = 30
+
 def init_db():
     """DBテーブルの初期化"""
     conn = sqlite3.connect(DB_PATH)
@@ -42,10 +45,10 @@ def fetch_30year_history():
     """過去30年分の全データを取得してDBに一括保存"""
     init_db()
     
-    # 30年前の開始年月日（1996-01-01）
-    start_date = "1996-01-01"
+    # 実行時点から YEARS_BACK 年前の1月1日を開始日とする（例: 2026年実行なら 1996-01-01）
+    start_date = f"{datetime.now().year - YEARS_BACK}-01-01"
     
-    print(f"[{datetime.now()}] 過去30年分（{start_date}〜）のデータ取得を開始します...")
+    print(f"[{datetime.now()}] 過去{YEARS_BACK}年分（{start_date}〜）のデータ取得を開始します...")
     
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
