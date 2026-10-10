@@ -1,28 +1,40 @@
 import sqlite3
-from datetime import datetime
+from datetime import datetime, date
 import yfinance as yf
 
 # 対象インデックスの定義
 # MSCI ACWIはYahoo Finance上のMSCI直接指数（STRD=配当再投資なしの価格指数）を使用。
-# MSCI エマージング・マーケットは直接指数（^891800-USD-STRD）だと過去データが
-# 取得できなかったため、連動するiSharesのETF（EEM）で代用。
+# ドル円は Yahoo Finance の為替ティッカー JPY=X を使用（1ドルあたりの円）。
 TARGET_INDEXES = [
     # 世界
     {"category": "世界", "name": "MSCI ACWI", "ticker": "^892400-USD-STRD"},
-    {"category": "世界", "name": "MSCI エマージング・マーケット・インデックス", "ticker": "EEM"},
     # 日本
     {"category": "日本", "name": "日経平均", "ticker": "^N225"},
     # 米国
     {"category": "米国", "name": "S&P 500", "ticker": "^GSPC"},
-    {"category": "米国", "name": "NYダウ", "ticker": "^DJI"},
     {"category": "米国", "name": "NASDAQ100", "ticker": "^NDX"},
+    # 為替
+    {"category": "為替", "name": "ドル円", "ticker": "JPY=X"},
+    # ボラティリティ（恐怖指数）
+    {"category": "ボラティリティ", "name": "VIX", "ticker": "^VIX"},
 ]
 
-#出力先データベースパス
+# 取得する年数（実行日からさかのぼる年数）
+YEARS_BACK = 30
+
+# 出力先データベースパス
 DB_PATH = "stock_data.db"
 
-# 取得対象期間（年）
-YEARS_BACK = 30
+
+def get_start_date(years=YEARS_BACK):
+    """実行日の「years年前の同じ月の1日」を YYYY-MM-DD で返す
+    例: 2026-10-09 に実行 → 1996-10-01
+    ※ 月初に揃えるので、うるう日(2/29)の例外処理は不要
+    """
+    today = date.today()
+    start = today.replace(year=today.year - years, day=1)
+    return start.strftime("%Y-%m-%d")
+
 
 def init_db():
     """DBテーブルの初期化"""
@@ -41,15 +53,16 @@ def init_db():
     conn.commit()
     conn.close()
 
+
 def fetch_30year_history():
-    """過去30年分の全データを取得してDBに一括保存"""
+    """実行日から過去30年分の全データを取得してDBに一括保存"""
     init_db()
-    
-    # 実行時点から YEARS_BACK 年前の1月1日を開始日とする（例: 2026年実行なら 1996-01-01）
-    start_date = f"{datetime.now().year - YEARS_BACK}-01-01"
-    
+
+    # 実行日の30年前（同じ月の1日）から取得
+    start_date = get_start_date()
+
     print(f"[{datetime.now()}] 過去{YEARS_BACK}年分（{start_date}〜）のデータ取得を開始します...")
-    
+
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
@@ -63,7 +76,8 @@ def fetch_30year_history():
         try:
             stock = yf.Ticker(ticker)
             # 指定日以降の日次データを取得
-            df = stock.history(start=start_date, interval="1d")
+            # auto_adjust=False：配当による終値の調整をしない（全指数を価格ベースで揃える）
+            df = stock.history(start=start_date, interval="1d", auto_adjust=False)
 
             if df.empty:
                 print(f"  [警告] {name} のデータが取得できませんでした。")
@@ -106,6 +120,7 @@ def fetch_30year_history():
     conn.commit()
     conn.close()
     print(f"\n[{datetime.now()}] すべての初期データ取得が完了しました。")
+
 
 if __name__ == "__main__":
     fetch_30year_history()
